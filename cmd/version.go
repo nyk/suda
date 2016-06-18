@@ -21,7 +21,7 @@ import (
 )
 
 // Version is the current version of suda.
-const Version string = "0.0.1-dev"
+const Version string = "0.0.2-dev"
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{

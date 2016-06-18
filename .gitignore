@@ -1,6 +1,10 @@
 ### Example user template template
 ### Example user template
 
+# Certificate and key files
+.pem
+.key
+
 # IntelliJ project files
 .idea
 *.iml
