@@ -20,19 +20,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// keysCmd represents the keys command
-var keysCmd = &cobra.Command{
-	Use:   "keys",
-	Short: "Manage public and private keys (RSA)",
-	Long: `These commands allow you to create public and private key pairs AddCommand
-	and are provided as a convenience, so that you do not have to install
-	additional dependencies, such as openssl`,
+// Version is the current version of suda.
+const Version string = "0.0.1-dev"
+
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Prints out the current version of suda",
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: Work your own magic here
-		fmt.Println("keys called")
+		fmt.Printf("Running Suda version: %v", Version)
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(keysCmd)
+	RootCmd.AddCommand(versionCmd)
 }

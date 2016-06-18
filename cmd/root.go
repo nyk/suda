@@ -24,7 +24,7 @@ import (
 
 var cfgFile string
 
-// This represents the base command when called without any subcommands
+// RootCmd this represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "suda",
 	Short: "Suda is a service designed to execute digitally signed code",
@@ -32,9 +32,9 @@ var RootCmd = &cobra.Command{
 that send digitally signed commands to the shell with elevated privileges.
 This allows web services to securely execute commands on the shell without
 having to run the web server with corresponding system privileges.`,
-// Uncomment the following line if your bare application
-// has an action associated with it:
-//	Run: func(cmd *cobra.Command, args []string) { },
+	// Uncomment the following line if your bare application
+	// has an action associated with it:
+	//	Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -53,7 +53,7 @@ func init() {
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.suda.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.suda/suda.yaml)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
@@ -65,9 +65,12 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	}
 
-	viper.SetConfigName(".suda")  // name of config file (without extension)
-	viper.AddConfigPath("$HOME")  // adding home directory as first search path
-	viper.AutomaticEnv()          // read in environment variables that match
+	viper.SetConfigName("suda")        // name of config file (without extension)
+	viper.AddConfigPath("$HOME/.suda") // adding home directory as first search path
+	viper.AddConfigPath("/etc/suda")
+	viper.AddConfigPath("/usr/local/etc/suda")
+	viper.AddConfigPath("/opt/suda/etc")
+	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {

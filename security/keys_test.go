@@ -12,27 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package security
 
-import (
-	"fmt"
+import "testing"
 
-	"github.com/spf13/cobra"
-)
+func TestGeneratePrivateKey(t *testing.T) {
+	_, err := generateRsaPrivateKey(2048)
+	if err != nil {
+		t.Error("There was an error generating the RSA key")
+	}
 
-// keysCmd represents the keys command
-var keysCmd = &cobra.Command{
-	Use:   "keys",
-	Short: "Manage public and private keys (RSA)",
-	Long: `These commands allow you to create public and private key pairs AddCommand
-	and are provided as a convenience, so that you do not have to install
-	additional dependencies, such as openssl`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("keys called")
-	},
-}
-
-func init() {
-	RootCmd.AddCommand(keysCmd)
+	//storeRsaKey(Private, key, "private.key", 0777)
+	//storeRsaKey(Public, key, "public.key", 0777)
+	//storeRsaPemKeys(Public, key, "public.pem", 0777)
 }
