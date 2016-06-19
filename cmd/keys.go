@@ -24,15 +24,25 @@ import (
 var keysCmd = &cobra.Command{
 	Use:   "keys",
 	Short: "Manage public and private keys (RSA)",
-	Long: `These commands allow you to create public and private key pairs AddCommand
+	Long: `These commands allow you to create public and private key pairs
+	and are provided as a convenience, so that you do not have to install
+	additional dependencies, such as openssl, to perform this task`,
+}
+
+// keysCmd represents the keys command
+var generateCmd = &cobra.Command{
+	Use:   "generate <filepath>",
+	Short: "Generate a private-public RSA keypair",
+	Long: `These commands allow you to create public and private key pairs
 	and are provided as a convenience, so that you do not have to install
 	additional dependencies, such as openssl`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: Work your own magic here
-		fmt.Println("keys called")
+		fmt.Printf("keys called: %v", args[0])
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(keysCmd)
+	keysCmd.AddCommand(generateCmd)
 }

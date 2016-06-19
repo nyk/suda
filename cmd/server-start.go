@@ -17,7 +17,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"suda/service"
+	"github.com/nyk/suda/service"
 )
 
 // startCmd represents the start command

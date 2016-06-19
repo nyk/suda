@@ -14,7 +14,7 @@
 
 package main
 
-import "suda/cmd"
+import "github.com/nyk/suda/cmd"
 
 func main() {
 	cmd.Execute()
