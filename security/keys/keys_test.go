@@ -17,12 +17,4 @@ package security
 import "testing"
 
 func TestGeneratePrivateKey(t *testing.T) {
-	_, err := generateRsaPrivateKey(2048)
-	if err != nil {
-		t.Error("There was an error generating the RSA key")
-	}
-
-	//storeRsaKey(Private, key, "private.key", 0777)
-	//storeRsaKey(Public, key, "public.key", 0777)
-	//storeRsaPemKeys(Public, key, "public.pem", 0777)
 }

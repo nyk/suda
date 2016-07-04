@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package security
+package rsa
 
 import (
 	"crypto/rand"
@@ -36,11 +36,16 @@ const (
 	Both
 )
 
-func generateRsaPrivateKey(bitnum int) (*rsa.PrivateKey, error) {
-	return rsa.GenerateKey(rand.Reader, bitnum)
+// ErrKeyType represents an invalid or empty key type value.
+var ErrKeyType = errors.New("Invalid key type")
+
+// GenerateKey is a wrapper function around rsa.GenerateKey function.
+func GenerateKey(keysize uint16) (*rsa.PrivateKey, error) {
+	return rsa.GenerateKey(rand.Reader, keysize)
 }
 
-func storeRsaKey(keytype KeyType, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
+// StoreKey writes a RSA key in DER byte format to file.
+func StoreKey(keytype KeyType, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
 	var pkey []byte
 	switch keytype {
 	case Public:
@@ -48,14 +53,18 @@ func storeRsaKey(keytype KeyType, key *rsa.PrivateKey, filepath string, perm os.
 	case Private:
 		pkey = x509.MarshalPKCS1PrivateKey(key)
 	default:
-		return errors.New("The key type was not set")
+		return ErrKeyType
 	}
 
 	return ioutil.WriteFile(filepath, pkey, perm)
 }
 
-func storeRsaPemKeys(keytype KeyType, key *rsa.PrivateKey, filepath string, perm os.FileMode) {
-	pemfile, _ := os.Create(filepath)
+// StoreKeysPem writes RSA keys to file in PEM format
+func StoreKeysPem(keytype KeyType, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
+	pemfile, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
 
 	if keytype == Private || keytype == Both {
 		pem.Encode(pemfile, &pem.Block{
@@ -74,4 +83,5 @@ func storeRsaPemKeys(keytype KeyType, key *rsa.PrivateKey, filepath string, perm
 
 	pemfile.Close()
 	os.Chmod(filepath, perm)
+	return nil
 }
