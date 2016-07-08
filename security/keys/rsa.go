@@ -40,7 +40,7 @@ const (
 var ErrKeyType = errors.New("Invalid key type")
 
 // GenerateKey is a wrapper function around rsa.GenerateKey function.
-func GenerateKey(keysize uint16) (*rsa.PrivateKey, error) {
+func GenerateKey(keysize int) (*rsa.PrivateKey, error) {
 	return rsa.GenerateKey(rand.Reader, keysize)
 }
 

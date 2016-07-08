@@ -16,11 +16,29 @@ package security
 
 import (
 	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509/pkix"
 	"testing"
 )
 
+var privatekey, keyErr = rsa.GenerateKey(rand.Reader, 2048)
+
+var name = &pkix.Name{
+	Country:            []string{"UK"},
+	Organization:       []string{"Suda Project"},
+	OrganizationalUnit: []string{"Dev"},
+}
+
+func init() {
+	if keyErr != nil {
+		panic("Cannot generate private key")
+	}
+}
+
 func TestMakeCaTemplate(t *testing.T) {
-	template, err := makeCaTemplate()
+	publickey := privatekey.Public()
+	template, err := MakeTemplate(name, &publickey, false)
 	if err != nil {
 		t.Errorf("makeCaTemplate returned an error: %v", err)
 	}
@@ -31,30 +49,24 @@ func TestMakeCaTemplate(t *testing.T) {
 }
 
 func TestSignCaCertificate(t *testing.T) {
-	privatekey, err := generateRsaPrivateKey(2048)
-	if err != nil {
-		t.Errorf("cannot generate private key: %v", err)
-	}
-	t.Logf("Private key: %v", privatekey)
-
 	publickey := privatekey.Public()
 	t.Logf("pubkey: %v", publickey)
 
-	template, err := makeCaTemplate()
+	template, err := MakeTemplate(name, &publickey, true)
 	t.Logf("Template: %v", template)
 
 	if err != nil {
 		t.Errorf("cannot make CA template: %v", err)
 	}
 
-	cert, err := signCaCertificate(template, publickey, crypto.PrivateKey(privatekey))
+	cert, err := SignCaCertificate(template, publickey, crypto.PrivateKey(privatekey))
 	t.Logf("Certificate: %v", cert)
 
 	if err != nil {
 		t.Errorf("cannot sign CA certificate: %v", err)
 	}
 
-	err = storeCaCertificate(cert, "ca_cert.pem", 0777)
+	err = StoreCertificate(cert, "ca_cert.crt", 0777)
 	if err != nil {
 		t.Errorf("cannot store certificate: %v", err)
 	}

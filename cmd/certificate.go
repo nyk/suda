@@ -15,8 +15,13 @@
 package cmd
 
 import (
+	"os"
+
+	"github.com/nyk/suda/security"
 	"github.com/spf13/cobra"
 )
+
+var isCA = false
 
 // certCmd represents the cert command
 var certCmd = &cobra.Command{
@@ -26,19 +31,13 @@ var certCmd = &cobra.Command{
 that send digitally signed commands to the shell with elevated privileges.
 This allows web services to securely execute commands on the shell without
 having to run the web server with corresponding system privileges.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		issuer := security.PkixName(os.Stdin)
+		template, _ := security.MakeTemplate(issuer, publickey, isCA)
+	},
 }
 
 func init() {
+	certCmd.Flags().BoolVarP(&isCA, "ca", "a", true, "the certificate is a certificate authority")
 	RootCmd.AddCommand(certCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// keysCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// keysCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }

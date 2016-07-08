@@ -15,43 +15,52 @@
 package security
 
 import (
+	"bufio"
 	"crypto"
 	"crypto/rand"
+	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"math/big"
 	"os"
+	"strings"
 	"time"
 )
 
-// GenerateCa function to generate a certificate authority certificate.
-func signCaCertificate(template *x509.Certificate, publickey crypto.PublicKey,
+var errKeyConvert = errors.New("Cannot convert key to bytes")
+
+// SignCaCertificate self-signs the certificate authority certificate.
+func SignCaCertificate(template *x509.Certificate, publickey crypto.PublicKey,
 	privatekey crypto.PrivateKey) ([]byte, error) {
 	return x509.CreateCertificate(rand.Reader, template, template, publickey,
 		privatekey)
 }
 
-func storeCaCertificate(cert []byte, filepath string, perm os.FileMode) error {
+// StoreCertificate stores a certificate to the file system.
+func StoreCertificate(cert []byte, filepath string, perm os.FileMode) error {
 	return ioutil.WriteFile(filepath, cert, perm)
 }
 
-func makeCaTemplate() (*x509.Certificate, error) {
-	// TO-DO: This needs to be populated from a configuration file.
-	issuer := pkix.Name{
-		Country:            []string{"US"},
-		Organization:       []string{"Corbis"},
-		OrganizationalUnit: []string{"BEN"},
-		Locality:           []string{"Seattle"},
-		Province:           []string{"Washington"},
+// MakeTemplate constructs a certificate authority template with public key.
+func MakeTemplate(subject *pkix.Name, publickey *crypto.PublicKey, isCA bool) (*x509.Certificate, error) {
+	key, err := x509.MarshalPKIXPublicKey(publickey)
+	if err != nil {
+		return nil, errKeyConvert
 	}
+
+	// SKI is supposed to be an SHA1 hash of the public key of the subject.
+	subjectKeyID := sha1.Sum(key)
 
 	// Construct the template.
 	template := &x509.Certificate{
-		IsCA: true,
+		IsCA: isCA,
 		BasicConstraintsValid: true,
-		Subject:               issuer,
-		SubjectKeyId:          []byte{1, 2, 3},
+		Subject:               *subject,
+		SubjectKeyId:          subjectKeyID[:],
 		SerialNumber:          big.NewInt(1234),
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(5, 5, 5),
@@ -59,4 +68,27 @@ func makeCaTemplate() (*x509.Certificate, error) {
 	}
 
 	return template, nil
+}
+
+// PkixName creates a DN record populated from an io.Reader
+func PkixName(stream io.Reader) (name *pkix.Name) {
+	r := bufio.NewReader(stream)
+	name = &pkix.Name{
+		Country:            PkixField(r, "Country"),
+		Organization:       PkixField(r, "Organization"),
+		OrganizationalUnit: PkixField(r, "Organizational Unit"),
+		Locality:           PkixField(r, "Locality/city"),
+		Province:           PkixField(r, "Province"),
+		StreetAddress:      PkixField(r, "Street Address"),
+		PostalCode:         PkixField(r, "Postal Code"),
+		CommonName:         PkixField(r, "Common Name")[0],
+	}
+	return
+}
+
+// PkixField constructs a DN field from a bufio reader.
+func PkixField(r *bufio.Reader, label string) []string {
+	fmt.Printf("%s: ", label)
+	field, _ := r.ReadString('\n')
+	return []string{strings.TrimSpace(field)}
 }
