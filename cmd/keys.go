@@ -19,6 +19,7 @@ import (
 	"path"
 
 	"github.com/nyk/suda/security/keys"
+	"github.com/nyk/suda/security/keys/rsa"
 	"github.com/spf13/cobra"
 )
 
@@ -26,11 +27,11 @@ var (
 	keypath string
 	keyname string
 	keysize int
-	export  bool
+	der     bool
 )
 
 // Perms is the default file mode for created files.
-const Perms os.FileMode = 0600
+const perms os.FileMode = 0600
 
 // keysCmd represents the keys command
 var keysCmd = &cobra.Command{
@@ -45,22 +46,17 @@ var keysCmd = &cobra.Command{
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate a private-public RSA keypair",
-	Long: `These commands allow you to create public and private key pairs
-	and are provided as a convenience, so that you do not have to install
-	additional toolchains, such as openssl`,
+	Long: `The generate command generates an RSA keypair that is compatible with
+	openssl and other RSA-based cryptographic software. The default format is the
+	Public Encrypted Mail (PEM) format, but you can save the file in the binary
+	DER format`,
 	Run: func(cmd *cobra.Command, args []string) {
 		key, err := rsa.GenerateKey(keysize)
 		ExitOnError(err)
 
 		basepath := path.Join(keypath, keyname)
-
-		if export {
-			ExitOnError(rsa.StoreKeysPem(rsa.Both, key, basepath+".pem", Perms))
-			return
-		}
-
-		ExitOnError(rsa.StoreKey(rsa.Private, key, basepath+"-priv.key", Perms))
-		ExitOnError(rsa.StoreKey(rsa.Public, key, basepath+"-pub.key", Perms))
+		ExitOnError(rsa.StoreKey(keys.Private, key, basepath+".priv", perms, der))
+		ExitOnError(rsa.StoreKey(keys.Public, key, basepath+".pub", perms, der))
 	},
 }
 
@@ -71,8 +67,8 @@ func init() {
 		"File path to store key files")
 	generateCmd.Flags().StringVarP(&keyname, "name", "n", "suda-rsa",
 		"Name of the key files")
-	generateCmd.Flags().BoolVarP(&export, "export", "e", false,
-		"Export key pair as a single encoded PEM file")
+	generateCmd.Flags().BoolVarP(&der, "der", "d", false,
+		"Save key pair files in binary DER format")
 
 	RootCmd.AddCommand(keysCmd)
 	keysCmd.AddCommand(generateCmd)

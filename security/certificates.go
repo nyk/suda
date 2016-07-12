@@ -21,7 +21,6 @@ import (
 	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,9 +28,9 @@ import (
 	"os"
 	"strings"
 	"time"
-)
 
-var errKeyConvert = errors.New("Cannot convert key to bytes")
+	"github.com/nyk/suda/security/keys"
+)
 
 // SignCaCertificate self-signs the certificate authority certificate.
 func SignCaCertificate(template *x509.Certificate, publickey crypto.PublicKey,
@@ -49,7 +48,7 @@ func StoreCertificate(cert []byte, filepath string, perm os.FileMode) error {
 func MakeTemplate(subject *pkix.Name, publickey *crypto.PublicKey, isCA bool) (*x509.Certificate, error) {
 	key, err := x509.MarshalPKIXPublicKey(publickey)
 	if err != nil {
-		return nil, errKeyConvert
+		return nil, keys.ErrConvert
 	}
 
 	// SKI is supposed to be an SHA1 hash of the public key of the subject.

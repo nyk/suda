@@ -15,13 +15,18 @@
 package cmd
 
 import (
+	"crypto"
+	"fmt"
 	"os"
 
 	"github.com/nyk/suda/security"
 	"github.com/spf13/cobra"
 )
 
-var isCA = false
+var (
+	isCA    bool
+	keyFile string
+)
 
 // certCmd represents the cert command
 var certCmd = &cobra.Command{
@@ -33,11 +38,14 @@ This allows web services to securely execute commands on the shell without
 having to run the web server with corresponding system privileges.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		issuer := security.PkixName(os.Stdin)
+		publickey := new(crypto.PublicKey)
 		template, _ := security.MakeTemplate(issuer, publickey, isCA)
+		fmt.Println(template)
 	},
 }
 
 func init() {
-	certCmd.Flags().BoolVarP(&isCA, "ca", "a", true, "the certificate is a certificate authority")
+	certCmd.Flags().BoolVarP(&isCA, "ca", "a", true, "true if the certificate is a certificate authority")
+	certCmd.Flags().StringVarP(&keyFile, "pubkey", "k", "", "file path to the public key for the certificate")
 	RootCmd.AddCommand(certCmd)
 }
