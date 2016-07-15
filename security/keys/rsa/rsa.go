@@ -37,7 +37,7 @@ func ParsePemFile(filepath string) ([]*pem.Block, error) {
 		return nil, err
 	}
 
-	blocks := make([]*pem.Block, 1, 10)
+	blocks := make([]*pem.Block, 0, 5)
 
 	for block, rest := pem.Decode([]byte(data)); block != nil; block, rest = pem.Decode(rest) {
 		blocks = append(blocks, block)
@@ -46,17 +46,8 @@ func ParsePemFile(filepath string) ([]*pem.Block, error) {
 	return blocks, nil
 }
 
-// StoreKey is a factory method for storing generated keys in DER or PEM format
-func StoreKey(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm os.FileMode, der bool) error {
-	if der {
-		return StoreDerKey(keytype, key, filepath, perm)
-	}
-
-	return StorePemKey(keytype, key, filepath, perm)
-}
-
-// StoreDerKey writes a RSA key in DER byte format to file.
-func StoreDerKey(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
+// StoreDer writes a RSA key in DER byte format to file.
+func StoreDer(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
 	var (
 		pkey []byte
 		err  error
@@ -77,8 +68,8 @@ func StoreDerKey(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm o
 	return ioutil.WriteFile(filepath+".der", pkey, perm)
 }
 
-// StorePemKey writes RSA keys to file in PEM format
-func StorePemKey(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
+// StorePem writes RSA keys to file in PEM format
+func StorePem(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
 	pemfile, err := os.Create(filepath + ".pem")
 	defer pemfile.Close()
 

@@ -19,7 +19,7 @@ import (
 	"path"
 
 	"github.com/nyk/suda/security/keys"
-	"github.com/nyk/suda/security/keys/rsa"
+	"github.com/nyk/suda/security/keys/keyman"
 	"github.com/spf13/cobra"
 )
 
@@ -51,12 +51,12 @@ var generateCmd = &cobra.Command{
 	Public Encrypted Mail (PEM) format, but you can save the file in the binary
 	DER format`,
 	Run: func(cmd *cobra.Command, args []string) {
-		key, err := rsa.GenerateKey(keysize)
+		key, err := keyman.GenerateRsaKey(keysize)
 		ExitOnError(err)
 
 		basepath := path.Join(keypath, keyname)
-		ExitOnError(rsa.StoreKey(keys.Private, key, basepath+".priv", perms, der))
-		ExitOnError(rsa.StoreKey(keys.Public, key, basepath+".pub", perms, der))
+		ExitOnError(keyman.StoreRsa(keys.Private, key, basepath+".priv", perms, der))
+		ExitOnError(keyman.StoreRsa(keys.Public, key, basepath+".pub", perms, der))
 	},
 }
 
