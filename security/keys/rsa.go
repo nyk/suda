@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rsa
+package keys
 
 import (
 	"crypto/rand"
@@ -21,85 +21,79 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 	"os"
-
-	"github.com/nyk/suda/security/keys"
 )
 
-// GenerateKey is a wrapper function around rsa.GenerateKey function.
-func GenerateKey(keysize int) (*rsa.PrivateKey, error) {
+// GenerateRsaKey is a wrapper function around rsa.GenerateKey function.
+func GenerateRsaKey(keysize int) (*rsa.PrivateKey, error) {
 	return rsa.GenerateKey(rand.Reader, keysize)
 }
 
-// ParsePemFile reads and marshals a key from an io.Reader
-func ParsePemFile(filepath string) ([]*pem.Block, error) {
-	data, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, err
+// StoreRsaDer writes a RSA key in DER byte format to file.
+func StoreRsaDer(keytype Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
+	pkey, error := EncodeRsaDer(keytype, key)
+	if error != nil {
+		return ErrConvert
 	}
-
-	blocks := make([]*pem.Block, 0, 5)
-
-	for block, rest := pem.Decode([]byte(data)); block != nil; block, rest = pem.Decode(rest) {
-		blocks = append(blocks, block)
-	}
-
-	return blocks, nil
+	return ioutil.WriteFile(filepath+".der", pkey, perm)
 }
 
-// StoreDer writes a RSA key in DER byte format to file.
-func StoreDer(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
+// StoreRsaPem writes RSA keys to file in PEM format
+func StoreRsaPem(keytype Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
+	pkey, error := EncodeRsaPem(keytype, key)
+	if error != nil {
+		return ErrConvert
+	}
+	return ioutil.WriteFile(filepath+".pem", pkey, perm)
+}
+
+// EncodeRsaDer encodes an RSA key into a slice of DER bytes
+func EncodeRsaDer(keytype Type, key *rsa.PrivateKey) ([]byte, error) {
 	var (
 		pkey []byte
 		err  error
 	)
 
 	switch keytype {
-	case keys.Private:
+	case Private:
 		pkey = x509.MarshalPKCS1PrivateKey(key)
-	case keys.Public:
+	case Public:
 		pkey, err = x509.MarshalPKIXPublicKey(&key.PublicKey)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	default:
-		return keys.ErrType
+		return nil, ErrType
 	}
 
-	return ioutil.WriteFile(filepath+".der", pkey, perm)
+	return pkey, nil
 }
 
-// StorePem writes RSA keys to file in PEM format
-func StorePem(keytype keys.Type, key *rsa.PrivateKey, filepath string, perm os.FileMode) error {
-	pemfile, err := os.Create(filepath + ".pem")
-	defer pemfile.Close()
-
-	if err != nil {
-		return err
-	}
+// EncodeRsaPem encodes an RSA key into a slice of PEM bytes
+func EncodeRsaPem(keytype Type, key *rsa.PrivateKey) ([]byte, error) {
+	var buf []byte
 
 	switch keytype {
-	case keys.Private:
-		pem.Encode(pemfile, &pem.Block{
+	case Private:
+		buf = pem.EncodeToMemory(&pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(key),
 		})
 
-	case keys.Public:
+	case Public:
 		pubkey, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// TO-DO provide the option to encode
-		pem.Encode(pemfile, &pem.Block{
+		buf = pem.EncodeToMemory(&pem.Block{
 			Type:  "PUBLIC KEY", // -- RSA PUBLIC KEY -- not compatible with OpenSSL.
 			Bytes: pubkey,
 		})
 
 	default:
-		return keys.ErrType
+		return nil, ErrType
 	}
 
-	os.Chmod(filepath, perm)
-	return nil
+	return buf, nil
 }

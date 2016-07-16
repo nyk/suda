@@ -14,7 +14,11 @@
 
 package keys
 
-import "errors"
+import (
+	"encoding/pem"
+	"errors"
+	"io/ioutil"
+)
 
 // Type is either Public or Private, for public and private keys.
 type Type int8
@@ -32,3 +36,19 @@ var (
 	// ErrConvert indicates that the key could not be converted to bytes
 	ErrConvert = errors.New("Cannot convert key to bytes")
 )
+
+// ParsePemFile reads and marshals a key from an io.Reader
+func ParsePemFile(filepath string) ([]*pem.Block, error) {
+	data, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	blocks := make([]*pem.Block, 0, 5)
+
+	for block, rest := pem.Decode([]byte(data)); block != nil; block, rest = pem.Decode(rest) {
+		blocks = append(blocks, block)
+	}
+
+	return blocks, nil
+}

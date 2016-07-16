@@ -19,7 +19,6 @@ import (
 	"path"
 
 	"github.com/nyk/suda/security/keys"
-	"github.com/nyk/suda/security/keys/keyman"
 	"github.com/spf13/cobra"
 )
 
@@ -30,8 +29,10 @@ var (
 	der     bool
 )
 
-// Perms is the default file mode for created files.
-const perms os.FileMode = 0600
+const (
+	perms          os.FileMode = 0600 // default file mode for created files.
+	defaultKeysize int         = 2048 // default bit size of keys.
+)
 
 // keysCmd represents the keys command
 var keysCmd = &cobra.Command{
@@ -51,17 +52,17 @@ var generateCmd = &cobra.Command{
 	Public Encrypted Mail (PEM) format, but you can save the file in the binary
 	DER format`,
 	Run: func(cmd *cobra.Command, args []string) {
-		key, err := keyman.GenerateRsaKey(keysize)
+		key, err := keys.GenerateRsaKey(keysize)
 		ExitOnError(err)
 
 		basepath := path.Join(keypath, keyname)
-		ExitOnError(keyman.StoreRsa(keys.Private, key, basepath+".priv", perms, der))
-		ExitOnError(keyman.StoreRsa(keys.Public, key, basepath+".pub", perms, der))
+		ExitOnError(keys.StoreRsaDer(keys.Private, key, basepath+".priv", perms))
+		ExitOnError(keys.StoreRsaDer(keys.Public, key, basepath+".pub", perms))
 	},
 }
 
 func init() {
-	generateCmd.Flags().IntVarP(&keysize, "size", "s", 2048,
+	generateCmd.Flags().IntVarP(&keysize, "size", "s", defaultKeysize,
 		"Set the bitsize of the generated keypair")
 	generateCmd.Flags().StringVarP(&keypath, "path", "p", ".",
 		"File path to store key files")
